@@ -8,7 +8,7 @@ import {
   updateDoc, 
   onSnapshot 
 } from "firebase/firestore";
-import { Product, ProductContextType } from "./productTypes";  // ✅ Update the path here
+import { Product, ProductContextType } from "./productTypes"; // ✅ Import types from `productTypes.ts`
 
 // ✅ Create Context
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
