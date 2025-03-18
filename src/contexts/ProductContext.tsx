@@ -20,7 +20,8 @@ export type Product = {
   category: string;
 };
 
-type ProductContextType = {
+// ✅ Move this export OUTSIDE the component
+export type ProductContextType = {
   products: Product[];
   addProduct: (product: Omit<Product, "id">) => Promise<void>;
   removeProduct: (id: string) => Promise<void>;
