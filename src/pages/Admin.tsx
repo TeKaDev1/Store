@@ -1,5 +1,5 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -38,8 +38,17 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const Admin = () => {
+  const navigate = useNavigate();
   const { addProduct } = useProductContext();
-  
+
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem("adminAuth");
+    if (!isAuthenticated) {
+      toast.error("يجب تسجيل الدخول للوصول إلى لوحة التحكم");
+      navigate("/admin/login"); // Redirect to login if not authenticated
+    }
+  }, [navigate]);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -52,14 +61,12 @@ const Admin = () => {
       category: '',
     },
   });
-  
+
   const onSubmit = (values: FormValues) => {
-    // Convert string values to numbers
     const price = Number(values.price);
     const originalPrice = values.originalPrice ? Number(values.originalPrice) : undefined;
     const discount = values.discount ? Number(values.discount) : undefined;
-    
-    // Add the new product
+
     addProduct({
       name: values.name,
       description: values.description,
@@ -69,17 +76,25 @@ const Admin = () => {
       imageUrl: values.imageUrl,
       category: values.category,
     });
-    
-    // Show success message
+
     toast.success('تمت إضافة المنتج بنجاح!');
-    
-    // Reset the form
     form.reset();
   };
-  
+
   return (
     <Layout>
       <div className="max-w-3xl mx-auto px-6 md:px-12 py-12">
+        {/* ✅ Logout Button */}
+        <button 
+          onClick={() => { 
+            localStorage.removeItem("adminAuth");
+            navigate("/admin/login");
+          }}
+          className="mb-4 bg-red-500 text-white px-4 py-2 rounded-md"
+        >
+          تسجيل الخروج
+        </button>
+
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

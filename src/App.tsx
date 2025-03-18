@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,6 +15,8 @@ import Checkout from "./pages/Checkout";
 import OrderSuccess from "./pages/OrderSuccess";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import AdminLogin from "./pages/AdminLogin"; // ✅ Import Admin Login Page
+import ProtectedRoute from "@/components/ProtectedRoute"; // ✅ Import Protected Route
 
 const queryClient = new QueryClient();
 
@@ -32,7 +33,20 @@ const App = () => (
                 <Route path="/product/:id" element={<ProductDetail />} />
                 <Route path="/checkout/:id" element={<Checkout />} />
                 <Route path="/order-success" element={<OrderSuccess />} />
-                <Route path="/admin" element={<Admin />} />
+                
+                {/* ✅ Protect the Admin Route */}
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute>
+                      <Admin />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* ✅ Admin Login Page */}
+                <Route path="/admin/login" element={<AdminLogin />} />
+
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </AnimatePresence>
