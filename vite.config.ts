@@ -3,9 +3,8 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-// Properly configure Vite with a base for GitHub Pages and other settings
 export default defineConfig(({ mode }) => ({
-  base: mode === 'production' ? '/Store/' : '/',  // Ensure this matches your repo name
+  base: "./",  // ✅ Ensures correct asset paths for Vercel
   server: {
     host: "::",
     port: 8080,
