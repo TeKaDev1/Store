@@ -1,6 +1,13 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { db } from '@/firebase';
-import { collection, addDoc, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { db } from "@/firebase";
+import { 
+  collection, 
+  addDoc, 
+  deleteDoc, 
+  doc, 
+  updateDoc, 
+  onSnapshot 
+} from "firebase/firestore";
 
 export type Product = {
   id: string;
@@ -15,7 +22,7 @@ export type Product = {
 
 type ProductContextType = {
   products: Product[];
-  addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
+  addProduct: (product: Omit<Product, "id">) => Promise<void>;
   removeProduct: (id: string) => Promise<void>;
   updateProduct: (id: string, product: Partial<Product>) => Promise<void>;
   selectedProduct: Product | null;
@@ -28,49 +35,33 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  // 🔹 Fetch products from Firestore
+  // 🔹 Real-time Firestore listener
   useEffect(() => {
-    const fetchProducts = async () => {
-      const querySnapshot = await getDocs(collection(db, "products"));
-      const productsData: Product[] = querySnapshot.docs.map(doc => ({
+    const unsubscribe = onSnapshot(collection(db, "products"), (snapshot) => {
+      const productsData: Product[] = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
       })) as Product[];
       setProducts(productsData);
-    };
+    });
 
-    fetchProducts();
+    return () => unsubscribe(); // Cleanup listener on unmount
   }, []);
 
   // 🔹 Add product to Firestore
-  const addProduct = async (product: Omit<Product, 'id'>) => {
-    const docRef = await addDoc(collection(db, "products"), product);
-    setProducts([...products, { id: docRef.id, ...product }]);
+  const addProduct = async (product: Omit<Product, "id">) => {
+    await addDoc(collection(db, "products"), product);
   };
 
   // 🔹 Remove product from Firestore
   const removeProduct = async (id: string) => {
     await deleteDoc(doc(db, "products", id));
-    setProducts(products.filter(product => product.id !== id));
-  };
-
-
-
-
-  export type ProductContextType = {
-    products: Product[];
-    addProduct: (product: Product) => Promise<void>;
-    removeProduct: (id: string) => Promise<void>;
-    fetchProducts: () => Promise<void>;
   };
 
   // 🔹 Update product in Firestore
   const updateProduct = async (id: string, updatedProduct: Partial<Product>) => {
     const productRef = doc(db, "products", id);
     await updateDoc(productRef, updatedProduct);
-    setProducts(products.map(product => 
-      product.id === id ? { ...product, ...updatedProduct } : product
-    ));
   };
 
   // 🔹 Select a product for viewing details
@@ -97,9 +88,7 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
 export const useProductContext = () => {
   const context = useContext(ProductContext);
   if (context === undefined) {
-    throw new Error('useProductContext must be used within a ProductProvider');
+    throw new Error("useProductContext must be used within a ProductProvider");
   }
   return context;
 };
-
-
