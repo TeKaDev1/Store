@@ -22,7 +22,7 @@ const Header: React.FC = () => {
   const navLinks = [
     { name: 'الرئيسية', path: '/' },
     { name: 'المنتجات', path: '/products' },
-    { name: 'إضافة منتج', path: '/admin' },
+    
   ];
 
   return (
