@@ -1,7 +1,7 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { db } from '@/firebase';
+import { collection, addDoc, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore';
 
-// Define types for our product data
 export type Product = {
   id: string;
   name: string;
@@ -15,9 +15,9 @@ export type Product = {
 
 type ProductContextType = {
   products: Product[];
-  addProduct: (product: Omit<Product, 'id'>) => void;
-  removeProduct: (id: string) => void;
-  updateProduct: (id: string, product: Partial<Product>) => void;
+  addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
+  removeProduct: (id: string) => Promise<void>;
+  updateProduct: (id: string, product: Partial<Product>) => Promise<void>;
   selectedProduct: Product | null;
   selectProduct: (product: Product | null) => void;
 };
@@ -25,72 +25,55 @@ type ProductContextType = {
 const ProductContext = createContext<ProductContextType | undefined>(undefined);
 
 export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Initialize with some sample products
-  const [products, setProducts] = useState<Product[]>(() => {
-    const savedProducts = localStorage.getItem('products');
-    return savedProducts ? JSON.parse(savedProducts) : [
-      {
-        id: '1',
-        name: 'هاتف ذكي XYZ',
-        description: 'هاتف ذكي متطور مع كاميرا عالية الدقة وبطارية طويلة العمر',
-        price: 1200,
-        originalPrice: 1500,
-        discount: 20,
-        imageUrl: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?q=80&w=1000',
-        category: 'إلكترونيات',
-      },
-      {
-        id: '2',
-        name: 'سماعات لاسلكية',
-        description: 'سماعات لاسلكية مع إلغاء الضوضاء وجودة صوت ممتازة',
-        price: 300,
-        originalPrice: 350,
-        discount: 15,
-        imageUrl: 'https://images.unsplash.com/photo-1545127398-14699f92334b?q=80&w=1000',
-        category: 'إلكترونيات',
-      },
-      {
-        id: '3',
-        name: 'ساعة ذكية',
-        description: 'ساعة ذكية مع متتبع للياقة البدنية وشاشة عالية الجودة',
-        price: 500,
-        imageUrl: 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?q=80&w=1000',
-        category: 'إلكترونيات',
-      },
-    ];
-  });
-  
+  const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  // Save products to localStorage whenever they change
+  // 🔹 Fetch products from Firestore
   useEffect(() => {
-    localStorage.setItem('products', JSON.stringify(products));
-  }, [products]);
-
-  // Add a new product
-  const addProduct = (product: Omit<Product, 'id'>) => {
-    const newProduct = {
-      ...product,
-      id: Math.random().toString(36).substring(2, 9),
+    const fetchProducts = async () => {
+      const querySnapshot = await getDocs(collection(db, "products"));
+      const productsData: Product[] = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Product[];
+      setProducts(productsData);
     };
-    setProducts([...products, newProduct]);
+
+    fetchProducts();
+  }, []);
+
+  // 🔹 Add product to Firestore
+  const addProduct = async (product: Omit<Product, 'id'>) => {
+    const docRef = await addDoc(collection(db, "products"), product);
+    setProducts([...products, { id: docRef.id, ...product }]);
   };
 
-  // Remove a product
-  const removeProduct = (id: string) => {
+  // 🔹 Remove product from Firestore
+  const removeProduct = async (id: string) => {
+    await deleteDoc(doc(db, "products", id));
     setProducts(products.filter(product => product.id !== id));
   };
 
-  // Update a product
-  const updateProduct = (id: string, updatedProduct: Partial<Product>) => {
-    setProducts(
-      products.map(product => 
-        product.id === id ? { ...product, ...updatedProduct } : product
-      )
-    );
+
+
+
+  export type ProductContextType = {
+    products: Product[];
+    addProduct: (product: Product) => Promise<void>;
+    removeProduct: (id: string) => Promise<void>;
+    fetchProducts: () => Promise<void>;
   };
 
-  // Select a product for viewing details
+  // 🔹 Update product in Firestore
+  const updateProduct = async (id: string, updatedProduct: Partial<Product>) => {
+    const productRef = doc(db, "products", id);
+    await updateDoc(productRef, updatedProduct);
+    setProducts(products.map(product => 
+      product.id === id ? { ...product, ...updatedProduct } : product
+    ));
+  };
+
+  // 🔹 Select a product for viewing details
   const selectProduct = (product: Product | null) => {
     setSelectedProduct(product);
   };
@@ -118,3 +101,5 @@ export const useProductContext = () => {
   }
   return context;
 };
+
+

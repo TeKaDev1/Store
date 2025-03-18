@@ -1,24 +1,26 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/firebaseConfig";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 const AdminLogin = () => {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // ✅ Check for the correct credentials
-    if (username === "DKHIL" && password === "Mo090909") {
-      localStorage.setItem("adminAuth", "true"); // Save login state
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      localStorage.setItem("adminAuth", "true"); // Save auth state
       toast.success("تم تسجيل الدخول بنجاح");
-      navigate("/admin"); // Redirect to admin panel
-    } else {
-      toast.error("اسم المستخدم أو كلمة المرور غير صحيحة");
+      navigate("/admin/dashboard"); // Redirect to Admin Dashboard
+    } catch (error) {
+      toast.error("البريد الإلكتروني أو كلمة المرور غير صحيحة");
     }
   };
 
@@ -27,20 +29,8 @@ const AdminLogin = () => {
       <div className="bg-white shadow-md rounded-lg p-6 w-full max-w-sm">
         <h2 className="text-2xl font-bold mb-4 text-center">تسجيل دخول المسؤول</h2>
         <form onSubmit={handleLogin} className="space-y-4">
-          <Input 
-            type="text" 
-            placeholder="اسم المستخدم" 
-            value={username} 
-            onChange={(e) => setUsername(e.target.value)} 
-            required 
-          />
-          <Input 
-            type="password" 
-            placeholder="كلمة المرور" 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
-            required 
-          />
+          <Input type="email" placeholder="البريد الإلكتروني" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <Input type="password" placeholder="كلمة المرور" value={password} onChange={(e) => setPassword(e.target.value)} required />
           <Button type="submit" className="w-full">تسجيل الدخول</Button>
         </form>
       </div>
@@ -48,4 +38,4 @@ const AdminLogin = () => {
   );
 };
 
-export default
+export default AdminLogin;
